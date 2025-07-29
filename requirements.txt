@@ -1,0 +1,21 @@
+# Core Google ADK and AI packages
+google-adk==1.6.1
+google-genai==1.25.0
+google-generativeai==0.8.5
+
+# Data validation and modeling
+pydantic==2.11.7
+pydantic_core==2.33.2
+
+# Financial data and web scraping (for commentary agent)
+yfinance==0.2.65
+pandas>=1.26.4
+feedparser==6.0.11
+beautifulsoup4
+
+# Standard dependencies
+requests>=2.32.0
+
+# Optional: Web framework support (if needed for deployment)
+fastapi==0.116.1
+uvicorn==0.35.0 
