@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vresc - Trading Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #0a0a0a 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5f5f5;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 90vh;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .sidebar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .sidebar-button {
+            width: 48px;
+            height: 48px;
+            background: rgba(45, 45, 45, 0.8);
+            border: 1px solid rgba(75, 75, 75, 0.5);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .sidebar-button:hover {
+            background: rgba(226, 232, 240, 0.1);
+            border-color: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        .sidebar-button svg {
+            width: 20px;
+            height: 20px;
+            fill: #d1d5db;
+            transition: fill 0.3s ease;
+        }
+
+        .sidebar-button:hover svg {
+            fill: #f9fafb;
+        }
+
+        .tooltip {
+            position: absolute;
+            right: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #f5f5f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(226, 232, 240, 0.3);
+        }
+
+        .sidebar-button:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-container {
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.95) 0%, rgba(25, 25, 25, 0.95) 100%);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(75, 75, 75, 0.3);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, rgba(5, 5, 5, 0.95) 0%, rgba(15, 15, 15, 0.95) 100%);
+            color: #f5f5f5;
+            padding: 24px;
+            text-align: center;
+            border-radius: 16px 16px 0 0;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+            position: relative;
+        }
+
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        }
+
+        .chat-header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .chat-header p {
+            opacity: 0.8;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            color: #d1d5db;
+        }
+
+        .session-info {
+            background: rgba(10, 10, 10, 0.5);
+            padding: 12px 24px;
+            border-bottom: 1px solid rgba(75, 75, 75, 0.3);
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: transparent;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(226, 232, 240, 0.3) transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(226, 232, 240, 0.3);
+            border-radius: 3px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            animation: messageAppear 0.4s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #f5f5f5;
+            flex-shrink: 0;
+            border: 1px solid rgba(75, 75, 75, 0.3);
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #374151, #1f2937);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            box-shadow: 0 0 20px rgba(226, 232, 240, 0.3);
+        }
+
+        .message-content {
+            background: rgba(25, 25, 25, 0.8);
+            padding: 16px 20px;
+            border-radius: 16px;
+            max-width: 75%;
+            line-height: 1.6;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(75, 75, 75, 0.2);
+            backdrop-filter: blur(10px);
+            color: #f5f5f5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.9));
+            color: #f5f5f5;
+        }
+
+        .message.assistant .message-content {
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.9), rgba(25, 25, 25, 0.9));
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .chat-input-container {
+            padding: 24px;
+            background: rgba(10, 10, 10, 0.5);
+            border-top: 1px solid rgba(226, 232, 240, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid rgba(75, 75, 75, 0.3);
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(25, 25, 25, 0.8);
+            color: #f5f5f5;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input::placeholder {
+            color: #6b7280;
+        }
+
+        .chat-input:focus {
+            border-color: #e2e8f0;
+            box-shadow: 0 0 0 3px rgba(226, 232, 240, 0.1);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            color: #374151;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(226, 232, 240, 0.3);
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(148, 163, 184, 0.4);
+        }
+
+        .send-button:disabled {
+            background: rgba(75, 75, 75, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #64748b;
+            animation: bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .error-message {
+            background: rgba(226, 232, 240, 0.1);
+            border: 1px solid rgba(226, 232, 240, 0.3);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced formatting for agent responses */
+        .message-content strong {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .message-content div {
+            line-height: 1.6;
+        }
+
+        /* Quiz question formatting */
+        .message-content div:has(strong) {
+            margin: 10px 0;
+        }
+
+        /* Better spacing for lists and options */
+        .message-content br + strong {
+            display: block;
+            margin-top: 16px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .app-container {
+                width: 100%;
+                height: 100vh;
+                padding: 0;
+            }
+            
+            .chat-container {
+                border-radius: 0;
+                height: 100vh;
+            }
+            
+            .sidebar {
+                right: 10px;
+                gap: 8px;
+            }
+            
+            .sidebar-button {
+                width: 44px;
+                height: 44px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Elegant Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-button" onclick="clearChat()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <div class="tooltip">Clear Chat</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="newSession()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <div class="tooltip">New Session</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="checkHealth()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="tooltip">Health Check</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="sendQuickMessage('I want to start a quiz')">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                <div class="tooltip">Start Quiz</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="sendQuickMessage('I want to start a financial market commentary')">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <div class="tooltip">Market Commentary</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="sendQuickMessage('I want to generate BigQuery SQL using the sql_forge mode')">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                </svg>
+                <div class="tooltip">SQL Forge</div>
+            </div>
+            
+            <div class="sidebar-button" onclick="sendQuickMessage('Tell me about financial trading')">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <div class="tooltip">Learn Trading</div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>VRESC</h1>
+                <p>Trading Intelligence</p>
+            </div>
+            
+            <div class="session-info">
+                <span id="session-display">Session: Not started</span>
+                <span style="float: right;">Status: <span id="status-display">Ready</span></span>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant">
+                    <div class="message-avatar">◈</div>
+                    <div class="message-content">
+                        <div>Welcome to <strong>Vresc</strong> - Trading Intelligence</div>
+                        <br>
+                        <div><strong>◆ Vresc Quiz:</strong> Challenge your market knowledge with intelligent difficulty scaling</div>
+                        <div><strong>◇ Vresc Intelligence:</strong> Real-time financial insights and commentary</div>
+                        <div><strong>◆ SQL Forge:</strong> Generate and refine BigQuery SQL with iterative optimization</div>
+                        <div><strong>◈ Vresc Mastery:</strong> Deep financial knowledge and strategic guidance</div>
+                        <br>
+                        <div>What financial challenge shall we conquer today?</div>
+                        <div class="message-time" id="welcome-time"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form class="chat-input-form" id="chat-form">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="message-input" 
+                        placeholder="Enter your message..." 
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="send-button" id="send-button">Send</button>
+                </form>
+            </div>
+        </div>
+    </div></body>
+
+    <script>
+        let currentSessionId = null;
+        let isLoading = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('welcome-time').textContent = new Date().toLocaleTimeString();
+            document.getElementById('message-input').focus();
+        });
+
+        // Form submission
+        document.getElementById('chat-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (message && !isLoading) {
+                sendMessage(message);
+                input.value = '';
+            }
+        });
+
+        // Send message function
+        async function sendMessage(message) {
+            if (isLoading) return;
+
+            addUserMessage(message);
+            setLoading(true);
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: currentSessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to send message');
+                }
+
+                const data = await response.json();
+                currentSessionId = data.session_id;
+                updateSessionDisplay();
+                addAssistantMessage(data.response);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addErrorMessage(error.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Quick message function
+        function sendQuickMessage(message) {
+            document.getElementById('message-input').value = message;
+            sendMessage(message);
+        }
+
+        // UI Helper functions
+        function addUserMessage(message) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">👤</div>
+                <div class="message-content">
+                    <div>${escapeHtml(message)}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addAssistantMessage(message) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">◈</div>
+                <div class="message-content">
+                    <div>${formatMessageForDisplay(message)}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addErrorMessage(error) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'error-message';
+            messageDiv.innerHTML = `
+                <strong>❌ Error:</strong> ${escapeHtml(error)}
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const sendButton = document.getElementById('send-button');
+            const statusDisplay = document.getElementById('status-display');
+            
+            if (loading) {
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+                statusDisplay.textContent = 'Thinking...';
+                addThinkingMessage();
+            } else {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+                statusDisplay.textContent = 'Ready';
+                removeThinkingMessage();
+            }
+        }
+
+        function addThinkingMessage() {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            messageDiv.id = 'thinking-message';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">◈</div>
+                <div class="message-content">
+                    <div class="loading">
+                        <span>Thinking</span>
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function removeThinkingMessage() {
+            const thinkingMessage = document.getElementById('thinking-message');
+            if (thinkingMessage) {
+                thinkingMessage.remove();
+            }
+        }
+
+        function updateSessionDisplay() {
+            const sessionDisplay = document.getElementById('session-display');
+            if (currentSessionId) {
+                sessionDisplay.textContent = `Session: ${currentSessionId.substring(0, 8)}...`;
+            }
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMessageForDisplay(message) {
+            // First escape HTML
+            let formatted = escapeHtml(message);
+            
+            // Convert **bold** to <strong>
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Handle response separators (for multiple events)
+            formatted = formatted.replace(/\n\n---\n\n/g, '<div style="border-top: 2px solid #e2e8f0; margin: 16px 0; padding-top: 16px;"></div>');
+            
+            // Convert line breaks to <br>
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            // Add some spacing around sections
+            formatted = formatted.replace(/<br><br>/g, '<br><div style="margin: 8px 0;"></div>');
+            
+            return formatted;
+        }
+
+        // Control functions
+        function clearChat() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-avatar">◈</div>
+                    <div class="message-content">
+                        <div>Chat cleared! How can I help you?</div>
+                        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function newSession() {
+            currentSessionId = null;
+            updateSessionDisplay();
+            clearChat();
+            addAssistantMessage('Started a new session! What would you like to do?');
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                addAssistantMessage(`◆ Health Check: ${data.status} | Agent: ${data.agent_name} | Services: ${Object.keys(data.services).join(', ')}`);
+            } catch (error) {
+                addErrorMessage('Health check failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

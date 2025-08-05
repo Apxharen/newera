@@ -1,0 +1,58 @@
+# Sales Database Schema
+
+## Table: sales_reps
+- rep_id (INT) - Primary key, unique identifier for each sales representative
+- first_name (STRING) - Sales rep's first name
+- last_name (STRING) - Sales rep's last name
+- email (STRING) - Sales rep's email address
+- hire_date (DATE) - Date when rep was hired
+- territory (STRING) - Assigned sales territory
+- commission_rate (FLOAT) - Commission rate (0.0 to 1.0)
+
+## Table: customers
+- customer_id (INT) - Primary key, unique identifier for each customer
+- company_name (STRING) - Customer company name
+- contact_name (STRING) - Primary contact person
+- contact_email (STRING) - Contact email address
+- phone (STRING) - Customer phone number
+- address (STRING) - Customer address
+- city (STRING) - Customer city
+- state (STRING) - Customer state/province
+- country (STRING) - Customer country
+- industry (STRING) - Customer industry type
+
+## Table: products
+- product_id (INT) - Primary key, unique identifier for each product
+- product_name (STRING) - Name of the product
+- category (STRING) - Product category
+- unit_price (FLOAT) - Price per unit in USD
+- cost (FLOAT) - Cost to produce/acquire the product
+- launch_date (DATE) - Product launch date
+- status (STRING) - Product status (active, discontinued, pending)
+
+## Table: sales_transactions
+- transaction_id (INT) - Primary key, unique identifier for each sale
+- customer_id (INT) - Foreign key to customers table
+- rep_id (INT) - Foreign key to sales_reps table
+- product_id (INT) - Foreign key to products table
+- sale_date (DATE) - Date of the sale
+- quantity (INT) - Quantity sold
+- unit_price (FLOAT) - Price per unit at time of sale
+- total_amount (FLOAT) - Total sale amount (quantity * unit_price)
+- discount_percent (FLOAT) - Discount percentage applied
+- commission_paid (FLOAT) - Commission paid to sales rep
+
+## Table: territories
+- territory_id (INT) - Primary key, unique identifier for each territory
+- territory_name (STRING) - Name of the territory
+- region (STRING) - Geographic region
+- target_revenue (FLOAT) - Annual revenue target for territory
+- manager_id (INT) - Foreign key to sales_reps table (territory manager)
+
+## Common Query Examples:
+- Calculate total sales by sales representative
+- Find top-performing products by revenue
+- Analyze sales trends by month/quarter
+- Calculate commission payments
+- Compare actual vs target revenue by territory
+- Find customers with highest lifetime value

@@ -1,0 +1,49 @@
+# E-commerce Database Schema
+
+## Table: customers
+- customer_id (INT) - Primary key, unique identifier for each customer
+- first_name (STRING) - Customer's first name
+- last_name (STRING) - Customer's last name  
+- email (STRING) - Customer's email address
+- phone (STRING) - Customer's phone number
+- created_at (TIMESTAMP) - Account creation timestamp
+- status (STRING) - Account status (active, inactive, suspended)
+
+## Table: products
+- product_id (INT) - Primary key, unique identifier for each product
+- product_name (STRING) - Name of the product
+- category (STRING) - Product category (electronics, clothing, books, etc.)
+- price (FLOAT) - Product price in USD
+- stock_quantity (INT) - Current stock quantity
+- supplier_id (INT) - Foreign key to suppliers table
+- created_at (TIMESTAMP) - Product creation timestamp
+
+## Table: orders
+- order_id (INT) - Primary key, unique identifier for each order
+- customer_id (INT) - Foreign key to customers table
+- order_date (TIMESTAMP) - Date and time when order was placed
+- total_amount (FLOAT) - Total order amount in USD
+- status (STRING) - Order status (pending, shipped, delivered, cancelled)
+- shipping_address (STRING) - Delivery address
+- payment_method (STRING) - Payment method used (credit_card, paypal, bank_transfer)
+
+## Table: order_items
+- order_item_id (INT) - Primary key, unique identifier for each order item
+- order_id (INT) - Foreign key to orders table
+- product_id (INT) - Foreign key to products table
+- quantity (INT) - Quantity of product ordered
+- unit_price (FLOAT) - Price per unit at time of order
+
+## Table: suppliers
+- supplier_id (INT) - Primary key, unique identifier for each supplier
+- supplier_name (STRING) - Name of the supplier company
+- contact_email (STRING) - Supplier contact email
+- phone (STRING) - Supplier phone number
+- country (STRING) - Supplier's country
+
+## Common Queries Examples:
+- Find total sales by customer
+- Get top-selling products by category
+- Calculate monthly revenue trends
+- Find customers with multiple orders
+- Analyze supplier performance
